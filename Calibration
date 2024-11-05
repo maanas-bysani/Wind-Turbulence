@@ -1,0 +1,46 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Oct 29 10:19:47 2024
+
+@author: Maanas
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+plt.rcParams["figure.figsize"] = (10,8)
+
+#%%
+time = 5
+nrows = (time * 60) + 1
+
+device_number = 9
+
+
+# file = 'C:\\Users\Maanas\OneDrive - Imperial College London\Blackboard\Lab\Cycle 2\Data\Session1 - 29th Oct\\' + str(device_number) + ' high.csv'
+file = 'C:\\Users\Maanas\OneDrive - Imperial College London\Blackboard\Lab\Cycle 2\Data\Session2 - 31st Oct\Tripod calibration\\'  + str(device_number) + ' low.csv'
+title_name = file.split('calibration\\')[1].split('.csv')[0]
+
+data = pd.read_csv(file, nrows=nrows)
+
+data['seconds'] = data.index.values
+data['temp'] = data[data.columns[1]]
+data['speed'] = data[data.columns[2]]
+
+data.drop(data.columns[3], axis=1, inplace = True)
+
+plt.plot(data.seconds, data.speed)
+plt.title(title_name + ' speed')
+plt.ylabel('speed (m/s)')
+plt.xlabel('time (sec)')
+plt.tight_layout()
+plt.show()
+
+
+hist, bin_edges = np.histogram(data['speed'])
+print(hist)
+
+plt.hist(data['speed'], bins=50)
+plt.title(title_name + ' speed')
+plt.show()
+
