@@ -11,76 +11,73 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import scipy.optimize as op
+from pathlib import Path
 
 plt.rcParams["figure.figsize"] = (10,8)
 
-# params
-time = 5 #in minutes
+# Parameters
+time = 5  # in minutes
 nrows = (time * 60) + 1
-
-# device_number = 9
 device_number = [2, 3, 4, 5, 6, 7, 8, 9]
+
 # file = 'C:\\Users\Maanas\OneDrive - Imperial College London\Blackboard\Lab\Cycle 2\Data\Session1 - 29th Oct\\' + str(device_number) + ' high.csv'
 
 def gaussian(x, amp, mu, sigma):
-    return (amp * np.exp(-((x - mu) ** 2) / (2 * sigma** 2)))
+    """Gaussian function for curve fitting."""
+    return amp * np.exp(-((x - mu) ** 2) / (2 * sigma ** 2))
 
 
-def analysis(block = False, bins = 50):
+def analysis(device_number=device_number, file_path=None, block=False, bins=50, show_fit = True):
+    """
+    Analyzes data for devices, plots speed vs. time and histogram with Gaussian fit.
+    
+    Parameters:
+        device_number (list): List of device numbers to process.
+        file_path (Path): Base directory for data files.
+        block (bool): Whether to block plots on show.
+        bins (int): Number of bins for histogram.
+    """
+    if file_path is None:
+        file_path = Path('C:/Users/Maanas/OneDrive - Imperial College London/Blackboard/Lab/Cycle 2/Data/Session2 - 31st Oct/Tripod calibration/')
+
     df = pd.DataFrame()
+
     for device in device_number:
-        file = 'C:\\Users\Maanas\OneDrive - Imperial College London\Blackboard\Lab\Cycle 2\Data\Session2 - 31st Oct\Tripod calibration\\'  + str(device) + ' low.csv'
-        title_name = file.split('calibration\\')[1].split('.csv')[0]
-
+        file = file_path / f"{device} low.csv"
         data = pd.read_csv(file, nrows=nrows)
-        df[str(device)+' temp'] = data[data.columns[1]]
-        df[str(device)+' speed'] = data[data.columns[2]]
-    df.set_index(data.index.values)
+        df[f"{device} temp"] = data.iloc[:, 1]  # temperature
+        df[f"{device} speed"] = data.iloc[:, 2]  # speed
+    print(df)
 
-    selected_columns = df.iloc[:, 1::2] #speed
-    # selected_columns = df.iloc[:, 0::2] #temp
+    selected_columns = df.iloc[:, 1::2] # odd - speed
+    # selected_columns = df.iloc[:, 0::2] # even - temp
 
+    plt.figure()
     for i, column in enumerate(selected_columns.columns, start=1):
         plt.subplot(3, 3, i)
         plt.plot(df.index, df[column])
-        plt.title(f"{column}")  
-        plt.ylabel('speed (m/s)')
-        plt.xlabel('time (sec)')
-
+        plt.title(column)
+        plt.ylabel('Speed (m/s)')
+        plt.xlabel('Time (sec)')
     plt.tight_layout()
     plt.show(block=block)
-    plt.pause(2)
-    plt.close()
-
-    for i, column in enumerate(selected_columns.columns, start=1):
-        plt.subplot(3, 3, i)
-        plt.hist(df[column], bins = bins)
-        plt.title(f"{column}")  
-        plt.ylabel('speed (m/s)')
-        plt.xlabel('time (sec)')
-
-    plt.tight_layout()
-    plt.show(block=block)
-    plt.pause(2)
+    plt.pause(5)
     plt.close()
 
 
-    amp_list = []
-    mu_list = []
-    sigma_list = []
+    amp_list, mu_list, sigma_list = [], [], []
 
+
+    plt.figure()
     for i, column in enumerate(selected_columns.columns, start=1):
-        # hist = plt.hist(df[column], bins = bins)
-        counts, bins_location = np.histogram(df[column], bins = bins)
+        counts, bins_location = np.histogram(df[column], bins=bins)
         bin_midpoints = 0.5 * (bins_location[1:] + bins_location[:-1])
 
-        a_guess = np.max(counts)
-        m_guess = np.median(bin_midpoints)
-        sig_guess = 0.5
+        a_guess, m_guess, sig_guess = np.max(counts), np.median(bin_midpoints), 0.5
+        p0 = [a_guess, m_guess, sig_guess]
 
-        p0 = [a_guess,m_guess,sig_guess]
+        fit, cov = op.curve_fit(gaussian, bin_midpoints, counts, p0, maxfev=100000)
 
-        fit,cov = op.curve_fit(gaussian, bin_midpoints, counts, p0, maxfev = 1000000000)
         # print("The parameters")
         # print(fit)
         # print('--'*45)
@@ -91,23 +88,25 @@ def analysis(block = False, bins = 50):
         mu_list.append(fit[1])
         sigma_list.append(fit[2])
 
-        curve_fit=gaussian(bin_midpoints, fit[0], fit[1], fit[2])
-
-        scale = np.max(counts)/fit[0]
         plt.subplot(3, 3, i)
-        plt.stairs(counts, bins_location, label = 'Data')
-        plt.plot(bin_midpoints,curve_fit,color='black', label = 'Fit')
-        plt.plot(bin_midpoints,scale*curve_fit,color='purple', label = 'Scaled')
+        plt.stairs(counts, bins_location, label='Data')
+        if show_fit is True:
+            plt.plot(bin_midpoints, gaussian(bin_midpoints, *fit), color='black', label='Fit')
+            plt.plot(bin_midpoints, np.max(counts) / fit[0] * gaussian(bin_midpoints, *fit), color='purple', label='Scaled')
+        plt.title(column)
+        plt.ylabel('Frequency')
+        plt.xlabel('Speed (m/s)')
         plt.legend()
+    
     plt.tight_layout()
     plt.show(block=block)
-    plt.pause(2)
+    plt.pause(10)
     plt.close()
 
-    # print(amp_list)
-    # print('--'*45)
-    # print(mu_list)
-    # print('--'*45)
-    # print(sigma_list)
+    if show_fit is True:
+        print("Amplitudes:", amp_list)
+        print("Means:", mu_list)
+        print("Standard deviations:", sigma_list)
 
-analysis(block = False)
+
+analysis(block = False, show_fit = True)
