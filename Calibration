@@ -73,7 +73,7 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=50, 
         counts, bins_location = np.histogram(df[column], bins=bins)
         bin_midpoints = 0.5 * (bins_location[1:] + bins_location[:-1])
 
-        a_guess, m_guess, sig_guess = np.max(counts), np.median(bin_midpoints), 0.5
+        a_guess, m_guess, sig_guess = np.max(counts), np.median(bin_midpoints), 0.1
         p0 = [a_guess, m_guess, sig_guess]
 
         fit, cov = op.curve_fit(gaussian, bin_midpoints, counts, p0, maxfev=100000)
@@ -108,5 +108,23 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=50, 
         print("Means:", mu_list)
         print("Standard deviations:", sigma_list)
 
+    if show_fit is True:
+        plt.errorbar(device_number, mu_list, yerr=sigma_list, \
+                     fmt = 'x', capsize = 2, elinewidth = 1, capthick = 1, barsabove = False, \
+                     color = 'black', alpha = 1, ecolor = 'tab:blue', label = 'Data - Random Error')
+
+        plt.errorbar(device_number, mu_list, yerr=0.7, \
+                     fmt = 'x', capsize = 2, elinewidth = 1, capthick = 1, barsabove = False, \
+                     color = 'black', alpha = .5, ecolor = 'tab:red', label = 'Data - Detector Error')
+
+        plt.title('Detector Calibration')
+        plt.xlabel('Device Number')
+        plt.ylabel('Speed (m/s)')
+        plt.legend()
+        plt.tight_layout()
+        plt.show(block=block)
+        plt.pause(10)
+        plt.close()
 
 analysis(block = False, show_fit = True)
+
