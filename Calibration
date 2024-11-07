@@ -20,7 +20,6 @@ time = 5  # in minutes
 nrows = (time * 60) + 1
 device_number = [2, 3, 4, 5, 6, 7, 8, 9]
 
-# file = 'C:\\Users\Maanas\OneDrive - Imperial College London\Blackboard\Lab\Cycle 2\Data\Session1 - 29th Oct\\' + str(device_number) + ' high.csv'
 
 def gaussian(x, amp, mu, sigma):
     """Gaussian function for curve fitting."""
@@ -45,8 +44,10 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=50, 
     for device in device_number:
         file = file_path / f"{device} low.csv"
         data = pd.read_csv(file, nrows=nrows)
-        df[f"{device} temp"] = data.iloc[:, 1]  # temperature
-        df[f"{device} speed"] = data.iloc[:, 2]  # speed
+        column_names = data.columns
+
+        df[f"Detector: {column_names[1]}"] = data.iloc[:, 1]  # temperature
+        df[f"Detector: {column_names[2]}"] = data.iloc[:, 2]  # speed
     print(df)
 
     selected_columns = df.iloc[:, 1::2] # odd - speed
@@ -56,7 +57,7 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=50, 
     for i, column in enumerate(selected_columns.columns, start=1):
         plt.subplot(3, 3, i)
         plt.plot(df.index, df[column])
-        plt.title(column)
+        plt.title(column.split('[')[0])
         plt.ylabel('Speed (m/s)')
         plt.xlabel('Time (sec)')
     plt.tight_layout()
@@ -93,7 +94,7 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=50, 
         if show_fit is True:
             plt.plot(bin_midpoints, gaussian(bin_midpoints, *fit), color='black', label='Fit')
             plt.plot(bin_midpoints, np.max(counts) / fit[0] * gaussian(bin_midpoints, *fit), color='purple', label='Scaled')
-        plt.title(column)
+        plt.title(column.split('[')[0])
         plt.ylabel('Frequency')
         plt.xlabel('Speed (m/s)')
         plt.legend()
@@ -111,7 +112,7 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=50, 
     if show_fit is True:
         plt.errorbar(device_number, mu_list, yerr=sigma_list, \
                      fmt = 'x', capsize = 2, elinewidth = 1, capthick = 1, barsabove = False, \
-                     color = 'black', alpha = 1, ecolor = 'tab:blue', label = 'Data - Random Error')
+                     color = 'black', alpha = 1, ecolor = 'black', label = 'Data - Random Error')
 
         plt.errorbar(device_number, mu_list, yerr=0.7, \
                      fmt = 'x', capsize = 2, elinewidth = 1, capthick = 1, barsabove = False, \
@@ -120,6 +121,7 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=50, 
         plt.title('Detector Calibration')
         plt.xlabel('Device Number')
         plt.ylabel('Speed (m/s)')
+        plt.xticks(device_number, [int(c.split(': ')[1].split()[0]) for c in selected_columns.columns])
         plt.legend()
         plt.tight_layout()
         plt.show(block=block)
