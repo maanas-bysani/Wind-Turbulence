@@ -18,10 +18,12 @@ plt.rcParams["figure.figsize"] = (14,8)
 
 
 # Parameters
-time = 15  # in minutes
-nrows = (time * 60) + 1
-device_number = [2, 3, 4, 5, 6, 7, 8, 9]
+time = 20  # in minutes
+nrows = (time * 6) + 1
+# device_number = [2, 3, 4, 5, 6, 7, 8, 9]
 
+# filenames = ['Large Spacing Grass', 'Large Spacing Water', 'Low Spacing Grass', 'Low Spacing Water']
+selected_csv = 'Low Spacing Water'
 
 
 def moving_average(df, window_size):
@@ -35,10 +37,6 @@ def moving_average(df, window_size):
     return moving_avg_df
 
 
-
-# filenames = ['Large Spacing Grass', 'Large Spacing Water', 'Low Spacing Grass', 'Low Spacing Water']
-selected_csv = 'Low Spacing Water'
-
 def analysis(block = False, filename = selected_csv):
     # file = 'C:\\Users\Maanas\OneDrive - Imperial College London\Blackboard\Lab\Cycle 2\Data\Session3 - 1st Nov\\'  + 'Level 8.csv'
     file = 'C:\\Users\Maanas\OneDrive - Imperial College London\Blackboard\Lab\Cycle 2\Data\Session4 - 5th Nov\\' + filename + '.csv'
@@ -48,11 +46,16 @@ def analysis(block = False, filename = selected_csv):
     data = data.iloc[:, 1:]
 
     auto_averages = data.tail(1)
+    print("auto_averages")
     print(auto_averages)
  
     df = data.head(nrows)
-    # df.replace(to_replace='', value = 0.0, inplace = True)
+    df.replace(to_replace='-', value = 0.0, inplace = True)
     df.fillna(0, inplace = True)
+    df = df.apply(pd.to_numeric)
+
+    # for column in df.columns:
+    #     df[column] = df[column].astype(float)
 
     print(df)
 
@@ -107,7 +110,9 @@ def analysis(block = False, filename = selected_csv):
     # data set:
     # [240, 284, 348, 351, 402, 994]
 
+# change this to reflect order of sensors:
     x_dummy = [6, 2, 3, 4, 5, 1]
+
     plt.scatter(x_dummy, average_list)
     plt.xticks(x_dummy, [int(c.split('[')[0]) for c in selected_columns.columns])
     plt.title('Detector Calibration')

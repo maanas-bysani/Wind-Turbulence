@@ -111,7 +111,6 @@ def analysis(block = False):
 analysis(block = False)
 
 
-
 '''
 
     device_code_mapping = {'device_code': [], 'ref_number': []}
