@@ -46,8 +46,11 @@ def analysis(block = False, filename = selected_csv):
     data = data.iloc[:, 1:-1]
 
     auto_averages = data.tail(1).iloc[:, 1::2]
+    auto_averages = auto_averages.apply(pd.to_numeric)
+
     print("auto_averages")
     print(auto_averages)
+    print("---" * 30)
  
     df = data.head(nrows)
     df.replace(to_replace='-', value = 0.0, inplace = True)
