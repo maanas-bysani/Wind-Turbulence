@@ -42,6 +42,18 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=10, 
         block (bool): Whether to block plots on show.
         bins (int): Number of bins for histogram.
     """
+    # 351 calibration (stool)
+
+    path = 'C:\\Users\Maanas\Documents\GitHub\Wind-Turbulence\data\\'
+
+    # stool data
+    stool_data = np.loadtxt(path+'351 calibration statistics.txt')
+    stool_gradient = stool_data[0]
+    stool_intercept = stool_data[1]
+    stool_gradient_error = stool_data[2]
+    stool_intercept_error = stool_data[3]
+
+
     if file_path is None:
         file_path = Path('C:\\Users\Maanas\OneDrive - Imperial College London\Blackboard\Lab\Cycle 2\data p\Delta Calibration')
 
@@ -49,6 +61,7 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=10, 
     delta_df = pd.DataFrame()
     df2 = pd.DataFrame()
     df3 = pd.DataFrame()
+    calibrated_df = pd.DataFrame()
 
     for device in device_number:
         file_low = file_path / f"{device} 1.csv"
@@ -87,11 +100,27 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=10, 
         df3[f"{device}"] = pd.concat([difference_low, difference_high], ignore_index=True)
         df3[f"ref for {device} high"] = pd.concat([data_low.iloc[:, 4], data_high.iloc[:, 4]], ignore_index=True)
 
+        calibrated_low_ref = stool_gradient * data_low.iloc[:, 4] + stool_intercept
+        # print("calibrated_df")
 
-    print(df)
-    print(delta_df)
-    print(df2)
-    print(df3)
+        # print(data_low.iloc[:, 4], calibrated_low_ref)
+        calibrated_high_ref = stool_gradient * data_high.iloc[:, 4] + stool_intercept
+
+        calibrated_low_difference = calibrated_low_ref - data_low.iloc[:, 2]
+        calibrated_high_difference = calibrated_high_ref - data_high.iloc[:, 2]
+
+        calibrated_df[f"{device}"] = pd.concat([calibrated_low_difference, calibrated_high_difference], ignore_index=True)
+        calibrated_df[f"ref for {device} high"] = pd.concat([calibrated_low_ref, calibrated_high_ref], ignore_index=True)
+        # print("calibrated_df")
+        # print(calibrated_df)
+
+
+    # print(df)
+    # print(delta_df)
+    # print(df2)
+    # print(df3)
+    print("calibrated_df")
+    print(calibrated_df)
 
     amp_list, mu_list, sigma_list = [], [], []
 
@@ -295,20 +324,81 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=10, 
     print("gradient_list", gradient_list)
     print("intercept_list", intercept_list)
 
-    # np.savetxt('data\gradient_list.txt', gradient_list)
-    # np.savetxt('data\intercept_list.txt', intercept_list)
 
-    # 
-    path = 'C:\\Users\Maanas\Documents\GitHub\Wind-Turbulence\data\\'
+    # using calibrated data
 
-    # stool data
-    stool_data = np.loadtxt(path+'351 calibration statistics.txt')
-    stool_gradient = stool_data[0]
-    stool_intercept = stool_data[1]
-    stool_gradient_error = stool_data[2]
-    stool_intercept_error = stool_data[3]
+    plt.figure()
+    gradient_list = []
+    intercept_list = []
+    for i in range(1, 1 + len(calibrated_df.columns) // 2):
+        col_x = 2 * (i-1) + 1
+        col_y = 2 * (i-1)
 
-    
+        plt.subplot(3, 3, i)
+        x_dummy_1 = np.array(np.arange(min(calibrated_df.iloc[:, col_x]),max(calibrated_df.iloc[:, col_x]),0.001))
+        lin_model_1 = Model(linear)
+        data_1 = RealData(calibrated_df.iloc[:, col_x], calibrated_df.iloc[:, col_y])
+
+        odr_1 = ODR(data_1, lin_model_1, beta0=[0., 0.])
+        out_1 = odr_1.run()
+
+        # x_fit_1 = np.linspace(df2.iloc[:, 1][0], df2.iloc[:, 1][-1], 100)
+        x_fit_1 = np.array(np.arange(min(calibrated_df.iloc[:, col_x]),max(calibrated_df.iloc[:, col_x]),0.001))
+        y_fit_1 = linear(out_1.beta, x_fit_1)
+
+        gradient_1 = out_1.beta[0]
+        intercept_1 = out_1.beta[1]
+        gradient_list.append(gradient_1)
+        intercept_list.append(intercept_1)
+
+        gradient_error_1 = out_1.sd_beta[0]
+        intercept_error_1 = out_1.sd_beta[1]
+
+        # gradient_error_g = out_g.cov_beta[0,0]
+        # intercept_error_g = out_g.cov_beta[1,1]
+
+        plt.errorbar(calibrated_df.iloc[:, col_x], calibrated_df.iloc[:, col_y], \
+                    capsize = 2, elinewidth = 1, capthick = 1, barsabove = False, fmt = 'x', \
+                        color = 'black', alpha = 1, ecolor = 'tab:blue', label='Data', ms = 1)
+        plt.plot( x_fit_1, y_fit_1, label = 'ODR Fit', color = 'black')
+        plt.ylabel('Delta (m/s)')
+        plt.xlabel('Ref Speed (m/s)')
+        plt.title(f"{calibrated_df.columns[col_y]}")
+        # plt.text(((min(x_fit_1) + max(x_fit_1)) / 2), 1, "Gradient = {0:.2e} \u00b1 {1:.2e} \nIntercept = {2:.2e} \u00b1 {3:.2e}" \
+        #         .format(gradient_1, gradient_error_1, intercept_1, intercept_error_1), bbox = dict(facecolor = 'white'))
+        plt.text(((min(x_fit_1) + max(x_fit_1)) / 2), 0.4, "m = {0:.1e} \u00b1 {1:.1e} \nc = {2:.1e} \u00b1 {3:.1e}" \
+                .format(gradient_1, gradient_error_1, intercept_1, intercept_error_1), bbox = dict(facecolor = 'white'), size = 'xx-small')
+
+        y_min_1 =  (gradient_1 - gradient_error_1) * np.array(x_dummy_1) + (intercept_1 - intercept_error_1)
+        y_max_1 =  (gradient_1 + gradient_error_1) * np.array(x_dummy_1) + (intercept_1 + intercept_error_1)
+        plt.fill_between(x_dummy_1, y_min_1, y_max_1, alpha = 0.5, label = 'Uncertainty', color='grey')
+
+        plt.grid()
+        plt.legend(fontsize = 'xx-small')
+
+        # plt.yticks(rotation=45)
+        # plt.ticklabel_format(axis='y', style='sci', scilimits=(-3,-3))
+
+        plt.tight_layout()
+        plt.suptitle("stool calibrated high and low combined")
+
+        # plt.savefig('Compton - Gaussian.png', dpi=1200)
+        # plt.show()
+
+        print('Params')
+        print("---" * 30)
+        out_1.pprint()
+
+    plt.show()
+
+    print("gradient_list", gradient_list)
+    print("intercept_list", intercept_list)
+
+
+    np.savetxt('data\gradient_list.txt', gradient_list)
+    np.savetxt('data\intercept_list.txt', intercept_list)
+
+
 
 
 
