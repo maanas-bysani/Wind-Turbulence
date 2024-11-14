@@ -93,7 +93,10 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=50, 
         plt.stairs(counts, bins_location, label='Data')
         if show_fit is True:
             plt.plot(bin_midpoints, gaussian(bin_midpoints, *fit), color='black', label='Fit')
-            plt.plot(bin_midpoints, np.max(counts) / fit[0] * gaussian(bin_midpoints, *fit), color='purple', label='Scaled')
+            plt.plot(bin_midpoints, (np.max(counts) / fit[0]) * gaussian(bin_midpoints, *fit), color='purple', label='Scaled')
+            text = f"Mean = {round(fit[1], 2)} $\pm$ {round(fit[2], 2)}"
+            plt.text(min(bin_midpoints) + 0.2, 1.3, text, bbox = dict(facecolor = 'white'))
+
         plt.title(column.split('[')[0])
         plt.ylabel('Frequency')
         plt.xlabel('Speed (m/s)')
@@ -112,11 +115,11 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=50, 
     if show_fit is True:
         plt.errorbar(device_number, mu_list, yerr=sigma_list, \
                      fmt = 'x', capsize = 2, elinewidth = 1, capthick = 1, barsabove = False, \
-                     color = 'black', alpha = 1, ecolor = 'black', label = 'Data - Random Error')
+                     color = 'black', alpha = 1, ecolor = 'black', label = 'Data - Fit Error')
 
         plt.errorbar(device_number, mu_list, yerr=0.7, \
                      fmt = 'x', capsize = 2, elinewidth = 1, capthick = 1, barsabove = False, \
-                     color = 'black', alpha = .5, ecolor = 'tab:red', label = 'Data - Detector Error')
+                     color = 'black', alpha = .5, ecolor = 'tab:red', label = 'Data - Detector Tolerance')
 
         plt.title('Detector Calibration')
         plt.xlabel('Device Number')

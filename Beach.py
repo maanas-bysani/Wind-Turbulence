@@ -39,6 +39,22 @@ def moving_average(df, window_size):
 def analysis(block = False, filename = selected_csv):
 
 # change this to reflect file name
+
+    path = 'C:\\Users\Maanas\Documents\GitHub\Wind-Turbulence\data\\'
+
+    # delta data
+    delta_gradient_list = np.loadtxt(path+'gradient_list.txt')
+    delta_intercept_list = np.loadtxt(path+'intercept_list.txt')
+
+    # stool data
+    stool_data = np.loadtxt(path+'351 calibration statistics.txt')
+    stool_gradient = stool_data[0]
+    stool_intercept = stool_data[1]
+    stool_gradient_error = stool_data[2]
+    stool_intercept_error = stool_data[3]
+
+    # beach data
+
     file = 'C:\\Users\Maanas\OneDrive - Imperial College London\Blackboard\Lab\Cycle 2\Data\Session6 - 7th Nov\\' + str(filename) +'.csv'
     title_name = file.split('Nov\\')[1].split('.csv')[0]
     
@@ -46,6 +62,7 @@ def analysis(block = False, filename = selected_csv):
     data = data.iloc[:, 1:-1]
 
     auto_averages = data.tail(1).iloc[:, 1::2]
+    # auto_averages = data.tail(1).iloc[:, 0::2]
     auto_averages = auto_averages.apply(pd.to_numeric)
 
     print("auto_averages")
@@ -112,13 +129,14 @@ def analysis(block = False, filename = selected_csv):
 
 # change this to reflect order of sensors:
     x_dummy = [2, 1, 3, 4, 5, 6, 7]
+    x_dummy = [113, 63, 155, 193, 235, 297, 389]
 
-    plt.scatter(x_dummy, average_list, color = 'red', label = 'Calculated Averages')
-    plt.scatter(x_dummy, auto_averages, color = 'blue', label = 'Auto Averages')
-    plt.scatter(0,0)
-    plt.xticks(x_dummy, [int(c.split('[')[0]) for c in selected_columns.columns])
-    plt.title('Detector Calibration')
-    plt.xlabel('Device Number')
+    plt.scatter(np.log(x_dummy), average_list, color = 'red', label = 'Calculated Averages')
+    plt.scatter(np.log(x_dummy), auto_averages, color = 'blue', label = 'Auto Averages')
+    # plt.scatter(0,0)
+    # plt.xticks(np.log(x_dummy), [int(c.split('[')[0]) for c in selected_columns.columns])
+    plt.title('Beach Measurements')
+    plt.xlabel('log(Height)')
     plt.ylabel('Speed (m/s)')
     plt.legend()
     plt.tight_layout()
@@ -126,4 +144,54 @@ def analysis(block = False, filename = selected_csv):
     plt.pause(5)
     plt.close()
 
-analysis(block = False)
+
+    plt.scatter(average_list, x_dummy, color = 'red', label = 'Calculated Averages')
+    plt.scatter(auto_averages, x_dummy, color = 'blue', label = 'Auto Averages')
+    # plt.scatter(0,0)
+    # plt.yticks(x_dummy, [int(c.split('[')[0]) for c in selected_columns.columns])
+    plt.title('Beach Measurements')
+    plt.ylabel('Height (cm)')
+    plt.xlabel('Speed (m/s)')
+    plt.legend()
+    plt.tight_layout()
+    plt.show(block=block)
+    plt.pause(5)
+    plt.close()
+
+    x_dummy = np.array(np.arange(0, 6, 0.001))
+    y_plot = (stool_gradient) * np.array(x_dummy) + (stool_intercept)
+    y_min_1 =  (stool_gradient - stool_gradient_error) * np.array(x_dummy) + (stool_intercept - stool_intercept_error)
+    y_max_1 =  (stool_gradient + stool_gradient_error) * np.array(x_dummy) + (stool_intercept + stool_intercept_error)
+
+    plt.plot( x_dummy, y_plot, label = 'ODR Fit', color = 'black')
+    plt.ylabel('Delta (m/s)')
+    plt.xlabel('Ref Speed (m/s)')
+    plt.title('ODR Fit')
+    plt.text(4, 2, "Gradient = {0:.2e} \u00b1 {1:.2e} \nIntercept = {2:.2e} \u00b1 {3:.2e}" \
+            .format(stool_gradient, stool_gradient_error, stool_intercept, stool_intercept_error), bbox = dict(facecolor = 'white'))
+
+    plt.fill_between(x_dummy, y_min_1, y_max_1, alpha = 0.5, label = 'Uncertainty', color='grey')
+
+    plt.grid()
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+    all_but_351 = selected_columns.drop(selected_columns.columns[[4]], axis=1)
+    print(all_but_351)
+
+    # all_but_351_average = average_list.pop(4)
+    # print(all_but_351_average)
+    all_but_351_average = average_list[:4] + average_list[4+1:]
+    print(all_but_351_average)
+
+
+    calibrated_average_speed_list = []
+    for i in range(len(delta_gradient_list)):
+        calibrated_average_speed = (delta_gradient_list[i]) * np.array(all_but_351_average[i]) + (delta_intercept_list[i])
+        calibrated_average_speed_list.append(calibrated_average_speed)
+
+    print(calibrated_average_speed_list)
+
+
+analysis(block = True)
