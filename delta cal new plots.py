@@ -18,7 +18,9 @@ plt.rcParams["figure.figsize"] = (10,8)
 time = 3  # in minutes
 nrows = (time * 60) + 1
 # device_number = [2, 3, 4, 5, 6, 7, 8, 9]
-device_number = [240, 272, 284, 348, 518, 994]
+# device_number = [240, 272, 284, 348, 518, 994]
+device_number = [272, 284, 348, 518, 994]
+
 # device_number = [240, 272, 284, 348]
 
 
@@ -333,10 +335,10 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=10, 
     print("gradient_list", gradient_list)
     print("intercept_list", intercept_list)
 
-    np.savetxt('data\gradient_list delta.txt', gradient_list)
-    np.savetxt('data\intercept_list delta.txt', intercept_list)
-    np.savetxt('data\gradient_error_list delta.txt', gradient_error_list)
-    np.savetxt('data\intercept_error_list delta.txt', intercept_error_list)
+    np.savetxt('data2\gradient_list delta.txt', gradient_list)
+    np.savetxt('data2\intercept_list delta.txt', intercept_list)
+    np.savetxt('data2\gradient_error_list delta.txt', gradient_error_list)
+    np.savetxt('data2\intercept_error_list delta.txt', intercept_error_list)
 
 
     # using calibrated data
@@ -415,10 +417,10 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=10, 
     print("intercept_list", intercept_list)
 
 
-    np.savetxt('data\gradient_list.txt', gradient_list)
-    np.savetxt('data\intercept_list.txt', intercept_list)
-    np.savetxt('data\gradient_error_list.txt', gradient_error_list)
-    np.savetxt('data\intercept_error_list.txt', intercept_error_list)
+    np.savetxt('data2\gradient_list.txt', gradient_list)
+    np.savetxt('data2\intercept_list.txt', intercept_list)
+    np.savetxt('data2\gradient_error_list.txt', gradient_error_list)
+    np.savetxt('data2\intercept_error_list.txt', intercept_error_list)
 
 
 

@@ -75,6 +75,7 @@ def analysis(file_path=None, block=False, bins=10, show_fit = True):
     speed_error_list = speed_rel_error * np.array(speed_list)
 
     average_wind_speed_list = []
+    std_dev_wind_speed_list = []
 
     for i in range(len(df.columns)):
         column_data = df.iloc[:, i]
@@ -82,28 +83,36 @@ def analysis(file_path=None, block=False, bins=10, show_fit = True):
         
         if len(non_zero_data) > 0:
             average = np.average(non_zero_data)
+            std_dev = np.std(non_zero_data)
         else:
             average = np.nan
             print("Error Computing Average")
 
         average_wind_speed_list.append(average)
+        std_dev_wind_speed_list.append(std_dev)
 
     print("average_wind_speed_list")
     print(average_wind_speed_list)
+    print("std_dev_wind_speed_list")
+    print(std_dev_wind_speed_list)
 
     # plt.scatter(speed_list, average_wind_speed_list, marker='x')
-    plt.errorbar(speed_list, average_wind_speed_list, xerr = speed_error_list, fmt = 'x')
+    plt.errorbar(speed_list, average_wind_speed_list, xerr = speed_error_list, yerr = std_dev_wind_speed_list, fmt = 'x', label = 'data')
     plt.xlabel('Theoretical Speed (m/s)')
-    plt.ylabel('Wind Speed (m/s)')
+    plt.ylabel('Average Measured Wind Speed (m/s)')
+    plt.legend()
     plt.show()
 
 
     gradient_list = []
     intercept_list = []
 
+    gradient_error_list = []
+    intercept_error_list = []
+
     x_dummy_1 = np.array(np.arange(min(speed_list),max(speed_list),0.001))
     lin_model_1 = Model(linear)
-    data_1 = RealData(speed_list, average_wind_speed_list)
+    data_1 = RealData(speed_list, average_wind_speed_list, sx = speed_error_list, sy = std_dev_wind_speed_list)
 
     odr_1 = ODR(data_1, lin_model_1, beta0=[0., 0.])
     out_1 = odr_1.run()
@@ -124,16 +133,21 @@ def analysis(file_path=None, block=False, bins=10, show_fit = True):
 
     gradient_1 = out_1.beta[0]
     intercept_1 = out_1.beta[1]
-    # gradient_list.append(gradient_1)
-    # intercept_list.append(intercept_1)
+    gradient_list.append(gradient_1)
+    intercept_list.append(intercept_1)
 
     gradient_error_1 = out_1.sd_beta[0]
     intercept_error_1 = out_1.sd_beta[1]
+    print(gradient_error_1)
+    
+    gradient_error_list.append(gradient_error_1)
+    intercept_error_list.append(intercept_error_1)
 
-    # gradient_error_g = out_g.cov_beta[0,0]
-    # intercept_error_g = out_g.cov_beta[1,1]
+    # gradient_error = out_1.cov_beta[0,0]
+    # intercept_error = out_1.cov_beta[1,1]
+    # print(gradient_error)
 
-    plt.errorbar(speed_list, average_wind_speed_list, \
+    plt.errorbar(speed_list, average_wind_speed_list, xerr = speed_error_list, yerr = std_dev_wind_speed_list,\
                 capsize = 2, elinewidth = 1, capthick = 1, barsabove = False, fmt = 'x', \
                     color = 'black', alpha = 1, ecolor = 'tab:blue', label='Data')
     plt.plot( x_fit_1, y_fit_1, label = 'ODR Fit', color = 'black')
