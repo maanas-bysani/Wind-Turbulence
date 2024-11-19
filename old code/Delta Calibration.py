@@ -18,9 +18,7 @@ plt.rcParams["figure.figsize"] = (10,8)
 time = 3  # in minutes
 nrows = (time * 60) + 1
 # device_number = [2, 3, 4, 5, 6, 7, 8, 9]
-# device_number = [240, 272, 284, 348, 518, 994]
-device_number = [272, 284, 348, 518, 994]
-
+device_number = [240, 272, 284, 348, 518, 994]
 # device_number = [240, 272, 284, 348]
 
 
@@ -108,14 +106,11 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=10, 
         # print(data_low.iloc[:, 4], calibrated_low_ref)
         calibrated_high_ref = stool_gradient * data_high.iloc[:, 4] + stool_intercept
 
-        # calibrated_low_difference = calibrated_low_ref - data_low.iloc[:, 2]
-        # calibrated_high_difference = calibrated_high_ref - data_high.iloc[:, 2]
+        calibrated_low_difference = calibrated_low_ref - data_low.iloc[:, 2]
+        calibrated_high_difference = calibrated_high_ref - data_high.iloc[:, 2]
 
-        calibrated_low_difference = data_low.iloc[:, 2]
-        calibrated_high_difference = data_high.iloc[:, 2]
-
-        calibrated_df[f"ref for {device} high"] = pd.concat([calibrated_low_ref, calibrated_high_ref], ignore_index=True)
         calibrated_df[f"{device}"] = pd.concat([calibrated_low_difference, calibrated_high_difference], ignore_index=True)
+        calibrated_df[f"ref for {device} high"] = pd.concat([calibrated_low_ref, calibrated_high_ref], ignore_index=True)
         # print("calibrated_df")
         # print(calibrated_df)
 
@@ -265,9 +260,6 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=10, 
     plt.figure()
     gradient_list = []
     intercept_list = []
-    gradient_error_list = []
-    intercept_error_list = []
-
     for i in range(1, 1 + len(df3.columns) // 2):
         col_x = 2 * (i-1) + 1
         col_y = 2 * (i-1)
@@ -294,9 +286,6 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=10, 
 
         # gradient_error_g = out_g.cov_beta[0,0]
         # intercept_error_g = out_g.cov_beta[1,1]
-
-        gradient_error_list.append(gradient_error_1)
-        intercept_error_list.append(intercept_error_1)
 
         plt.errorbar(df3.iloc[:, col_x], df3.iloc[:, col_y], \
                     capsize = 2, elinewidth = 1, capthick = 1, barsabove = False, fmt = 'x', \
@@ -335,19 +324,12 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=10, 
     print("gradient_list", gradient_list)
     print("intercept_list", intercept_list)
 
-    np.savetxt('data2\gradient_list delta.txt', gradient_list)
-    np.savetxt('data2\intercept_list delta.txt', intercept_list)
-    np.savetxt('data2\gradient_error_list delta.txt', gradient_error_list)
-    np.savetxt('data2\intercept_error_list delta.txt', intercept_error_list)
-
 
     # using calibrated data
 
     plt.figure()
     gradient_list = []
     intercept_list = []
-    gradient_error_list = []
-    intercept_error_list = []
     for i in range(1, 1 + len(calibrated_df.columns) // 2):
         col_x = 2 * (i-1) + 1
         col_y = 2 * (i-1)
@@ -372,9 +354,6 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=10, 
         gradient_error_1 = out_1.sd_beta[0]
         intercept_error_1 = out_1.sd_beta[1]
 
-        gradient_error_list.append(gradient_error_1)
-        intercept_error_list.append(intercept_error_1)
-
         # gradient_error_g = out_g.cov_beta[0,0]
         # intercept_error_g = out_g.cov_beta[1,1]
 
@@ -382,10 +361,9 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=10, 
                     capsize = 2, elinewidth = 1, capthick = 1, barsabove = False, fmt = 'x', \
                         color = 'black', alpha = 1, ecolor = 'tab:blue', label='Data', ms = 1)
         plt.plot( x_fit_1, y_fit_1, label = 'ODR Fit', color = 'black')
-        # plt.ylabel('Delta (m/s)')
-        plt.ylabel('351 Speed (m/s)')
-        plt.xlabel(f'{calibrated_df.columns[col_x]} Speed (m/s)')
-        plt.title(f"{calibrated_df.columns[col_x]}")
+        plt.ylabel('Delta (m/s)')
+        plt.xlabel('Ref Speed (m/s)')
+        plt.title(f"{calibrated_df.columns[col_y]}")
         # plt.text(((min(x_fit_1) + max(x_fit_1)) / 2), 1, "Gradient = {0:.2e} \u00b1 {1:.2e} \nIntercept = {2:.2e} \u00b1 {3:.2e}" \
         #         .format(gradient_1, gradient_error_1, intercept_1, intercept_error_1), bbox = dict(facecolor = 'white'))
         plt.text(((min(x_fit_1) + max(x_fit_1)) / 2), 0.4, "m = {0:.1e} \u00b1 {1:.1e} \nc = {2:.1e} \u00b1 {3:.1e}" \
@@ -417,10 +395,8 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=10, 
     print("intercept_list", intercept_list)
 
 
-    np.savetxt('data2\gradient_list.txt', gradient_list)
-    np.savetxt('data2\intercept_list.txt', intercept_list)
-    np.savetxt('data2\gradient_error_list.txt', gradient_error_list)
-    np.savetxt('data2\intercept_error_list.txt', intercept_error_list)
+    # np.savetxt('data\gradient_list.txt', gradient_list)
+    # np.savetxt('data\intercept_list.txt', intercept_list)
 
 
 

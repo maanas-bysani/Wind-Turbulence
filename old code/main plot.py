@@ -36,8 +36,6 @@ def gaussian(x, amp, mu, sigma):
 
 def analysis(block = False, filename = selected_csv):
 
-# change this to reflect file name
-
     path = 'C:\\Users\Maanas\Documents\GitHub\Wind-Turbulence\data\\'
 
     # delta data
@@ -439,7 +437,7 @@ def analysis(block = False, filename = selected_csv):
     odr = ODR(data, lin_model, beta0=[0., 1.])
     out = odr.run()
 
-    x_fit = np.linspace(log_z[0], log_z[-1], 100)
+    x_fit = np.linspace(min(log_z), max(log_z), 100)
     y_fit = linear(out.beta, x_fit)
 
     gradient = out.beta[0]
@@ -467,11 +465,8 @@ def analysis(block = False, filename = selected_csv):
     plt.legend()
     plt.show()
 
-    
-
-
-
-
+    print("gradient, intercept, gradient_error, intercept_error")
+    print(gradient, intercept, gradient_error, intercept_error)
 
 
 
