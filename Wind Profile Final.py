@@ -15,6 +15,9 @@ import scipy.optimize as op
 from pathlib import Path
 import scipy as sp
 from scipy.odr import *
+from sklearn.metrics import r2_score, mean_squared_error
+from scipy.stats import chisquare
+
 
 
 plt.rcParams["figure.figsize"] = (14,8)
@@ -37,6 +40,10 @@ def gaussian(x, amp, mu, sigma):
 def ln(p, x):
     a, b = p
     return a * np.log(x) + b
+
+def horizontal_line(params, x):
+    c = params
+    return c * np.ones_like(x)
 
 
 def analysis(block = False, filename = selected_csv):
@@ -158,7 +165,7 @@ def analysis(block = False, filename = selected_csv):
 
     # doing histogram + gaussian fits on mean, then min, then max
 
-    amp_list_mean, mu_list_mean, sigma_list_mean, mu_error_list_mean = [], [], [], []
+    amp_list_mean, mu_list_mean, sigma_list_mean, mu_error_list_mean, sigma_list_error_mean = [], [], [], [], []
 
     bins = 100
     plt.figure()
@@ -182,6 +189,7 @@ def analysis(block = False, filename = selected_csv):
         mu_list_mean.append(fit[1])
         sigma_list_mean.append(fit[2])
         mu_error_list_mean.append(np.sqrt(cov[1,1]))
+        sigma_list_error_mean.append(np.sqrt(cov[2,2]))
 
         plt.subplot(3, 3, i)
         plt.stairs(counts, bins_location, label='Data')
@@ -215,7 +223,7 @@ def analysis(block = False, filename = selected_csv):
 
     # for minimum
 
-    amp_list_min, mu_list_min, sigma_list_min, mu_error_list_min = [], [], [], []
+    amp_list_min, mu_list_min, sigma_list_min, mu_error_list_min, sigma_list_error_min = [], [], [], [], []
 
     bins = 100
     plt.figure()
@@ -233,6 +241,7 @@ def analysis(block = False, filename = selected_csv):
         mu_list_min.append(fit[1])
         sigma_list_min.append(fit[2])
         mu_error_list_min.append(np.sqrt(cov[1,1]))
+        sigma_list_error_min.append(np.sqrt(cov[2,2]))
 
         plt.subplot(3, 3, i)
         plt.stairs(counts, bins_location, label='Data')
@@ -260,7 +269,7 @@ def analysis(block = False, filename = selected_csv):
 
     # for maximums
 
-    amp_list_max, mu_list_max, sigma_list_max, mu_error_list_max = [], [], [], []
+    amp_list_max, mu_list_max, sigma_list_max, mu_error_list_max, sigma_list_error_max = [], [], [], [], []
 
     bins = 100
     plt.figure()
@@ -278,6 +287,7 @@ def analysis(block = False, filename = selected_csv):
         mu_list_max.append(fit[1])
         sigma_list_max.append(fit[2])
         mu_error_list_max.append(np.sqrt(cov[1,1]))
+        sigma_list_error_max.append(np.sqrt(cov[2,2]))
 
         plt.subplot(3, 3, i)
         plt.stairs(counts, bins_location, label='Data')
@@ -336,8 +346,12 @@ def analysis(block = False, filename = selected_csv):
     # print(mu_avg_error)
 
     # expect std dev to be same for all gaussians so just use avg
-    std_dev_avg = (np.array(sigma_list_mean) + np.array(sigma_list_max) + np.array(sigma_list_min)) / 3
+    sigma_avg = (np.array(sigma_list_mean) + np.array(sigma_list_max) + np.array(sigma_list_min)) / 3
 
+    # print("sigma_list_mean, sigma_list_max, sigma_list_min")
+    # print(sigma_list_mean, sigma_list_max, sigma_list_min)
+    sigma_err_avg = (np.array(sigma_list_error_mean) + np.array(sigma_list_error_max) + np.array(sigma_list_error_min)) / 3
+    
     
     # final plots with odr fit
 
@@ -397,9 +411,11 @@ def analysis(block = False, filename = selected_csv):
     z4 = np.exp(-(intercept - intercept_error_sd)/(gradient + gradient_error_sd))*1000
 
     # print(z1, z2, z3, z4)
-    # print("z_0_min, z_0, z_0_max")
-    # print(z_0_min, z_0, z_0_max)
-    
+    print("z_0_min, z_0, z_0_max")
+    print(z_0_min, z_0, z_0_max)
+    print(z_0_max - z_0)
+    print(z_0 - z_0_min)
+
     y_min =  (gradient - gradient_error) * np.log(np.array(x_fit_ln)) + (intercept - intercept_error)
     y_max =  (gradient + gradient_error) * np.log(np.array(x_fit_ln)) + (intercept + intercept_error)
 
@@ -434,11 +450,78 @@ def analysis(block = False, filename = selected_csv):
 
     plt.title('Wind Profile & ODR Fit', fontsize = 18)
     plt.xlabel('ln(height) (arb. units)', fontsize = 12, labelpad=1.2)
-    plt.ylabel(r'ū ($\dfrac{m}{s}$)', fontsize = 12, labelpad=-1)
+    # plt.ylabel(r'ū ($\dfrac{m}{s}$)', fontsize = 12, labelpad=-1)
+    plt.ylabel('ū (m/s)', fontsize = 12, labelpad=-1)
     plt.legend()
     plt.grid()
     plt.tight_layout()
-    # plt.savefig("final\\Wind Profile Final v2", dpi=1200)
+    # plt.savefig("final\\Wind Profile Final v3", dpi=1200)
+    plt.show(block=block)
+
+
+
+    # u star plot
+
+    model_h = Model(horizontal_line)
+    data_h = RealData(distances, sigma_avg)
+
+    initial_guess_h = [np.mean(sigma_avg)]
+
+    odr_h = ODR(data_h, model_h, beta0=initial_guess_h)
+    output_h = odr_h.run()
+
+    y_value = output_h.beta[0]
+    y_value_sd = output_h.sd_beta[0]
+    y_value_cov = output_h.cov_beta[0,0]
+
+    print("Fitted horizontal line y =", y_value, "+-", y_value_sd, 'or +-', y_value_cov)
+
+
+    x_fit_h = np.linspace(min(distances), max(distances), 100)
+    y_fit_h = horizontal_line([y_value], x_fit_h)
+    
+
+    r2 = r2_score(sigma_avg, horizontal_line([y_value], distances))
+    print("R^2 score:", r2)
+
+    chisquared = chisquare(sigma_avg, horizontal_line([y_value], distances))
+    print("c2", chisquared)
+
+    plt.figure(figsize = (10,5))
+    plt.errorbar(distances, sigma_avg, \
+                xerr = dist_errors,\
+                yerr = sigma_err_avg, \
+                capsize = 2, elinewidth = 1, capthick = 1, barsabove = False, fmt = 'x', \
+                color = 'black', alpha = 1, ecolor = 'tab:blue', label='Data (Standard Deviation of Calibrated Gaussian)')
+    plt.plot(x_fit_h, y_fit_h, label = 'ODR Fit', color = 'black')
+
+
+    y_min =  (y_value - y_value_cov) 
+    y_max =  (y_value + y_value_cov) 
+
+    y_min_sd =  (y_value - y_value_sd)  
+    y_max_sd =  (y_value + y_value_sd) 
+
+
+    plt.text(3.2, .70, "u* = {0:.2f} \u00b1 {1:.2f} (Std. Dev.) \u00b1 {2:.2f} (Cov.)" \
+                    .format(y_value, y_value_sd, y_value_cov), bbox = dict(facecolor = 'white'), \
+                        size = 'medium', ha = 'center', va = 'center')
+
+    plt.text(3.2, .67, "R-squared = {0:.2f} & p-value from Chi-squared = {1:.2f}" \
+                    .format(r2, chisquared[1]), bbox = dict(facecolor = 'white'), \
+                        size = 'medium', ha = 'center', va = 'center')
+
+    plt.fill_between(x_fit_h, y_min_sd, y_max_sd, alpha = 0.7, label = 'Uncertainty (Std. Dev.)', color='grey')
+    # plt.fill_between(x_fit_h, y_min, y_min_sd, alpha = 0.3, color='grey')
+    # plt.fill_between(x_fit_h, y_max_sd, y_max, alpha = 0.3, label = 'Uncertainty (Cov.)', color='grey')
+
+    plt.title('u* vs height & Linear Fit', fontsize = 18)
+    plt.xlabel('Height (m)', fontsize = 12, labelpad=1.2)
+    plt.ylabel('u* (m/s)', fontsize = 12, labelpad=-1)
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.savefig("final\\u-star plot", dpi=1200)
     plt.show(block=block)
 
 
