@@ -269,10 +269,10 @@ def analysis(device_number=device_number, file_path=None, block=False, bins=10, 
     print("gradient_list", gradient_list)
     print("intercept_list", intercept_list)
 
-    np.savetxt('final\\no delta\gradient_list.txt', gradient_list)
-    np.savetxt('final\\no delta\intercept_list.txt', intercept_list)
-    np.savetxt('final\\no delta\gradient_error_list.txt', gradient_error_list)
-    np.savetxt('final\\no delta\intercept_error_list.txt', intercept_error_list)
+    # np.savetxt('final\\no delta\gradient_list.txt', gradient_list)
+    # np.savetxt('final\\no delta\intercept_list.txt', intercept_list)
+    # np.savetxt('final\\no delta\gradient_error_list.txt', gradient_error_list)
+    # np.savetxt('final\\no delta\intercept_error_list.txt', intercept_error_list)
 
     # np.savetxt('final\\no delta\\240_gradient_list.txt', gradient_list)
     # np.savetxt('final\\no delta\\240_intercept_list.txt', intercept_list)

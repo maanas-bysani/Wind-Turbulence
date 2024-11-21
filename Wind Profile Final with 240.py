@@ -337,7 +337,7 @@ def analysis(block = False, filename = selected_csv):
     plt.ylabel('Frequency', fontsize = 12)
     plt.xlabel('Calibrated Speed (m/s)', fontsize = 12)
     plt.legend()
-    plt.savefig(f"final\\Detector Calibration and Gaussian Fits.png", dpi=1200)
+    # plt.savefig(f"final\\Detector Calibration and Gaussian Fits.png", dpi=1200)
     plt.show()
 
 
@@ -460,7 +460,7 @@ def analysis(block = False, filename = selected_csv):
     plt.legend()
     plt.grid()
     plt.tight_layout()
-    plt.savefig("final\\Wind Profile Final v3", dpi=1200)
+    # plt.savefig("final\\Wind Profile Final v3", dpi=1200)
     plt.show(block=block)
 
 
@@ -526,7 +526,7 @@ def analysis(block = False, filename = selected_csv):
     plt.legend()
     plt.grid()
     plt.tight_layout()
-    plt.savefig("final\\u-star plot", dpi=1200)
+    # plt.savefig("final\\u-star plot", dpi=1200)
     plt.show(block=block)
 
 

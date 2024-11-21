@@ -51,11 +51,11 @@ def analysis(block = False, filename = selected_csv):
     path = 'C:\\Users\Maanas\Documents\GitHub\Wind-Turbulence\\final\\'
 
     # detectors calibration data
-    delta_gradient_list = np.loadtxt(path+'no delta\\gradient_list.txt')
-    delta_intercept_list = np.loadtxt(path+'no delta\\intercept_list.txt')
+    delta_gradient_list = np.loadtxt(path+'no delta\\no240\\gradient_list.txt')
+    delta_intercept_list = np.loadtxt(path+'no delta\\no240\\intercept_list.txt')
 
-    delta_gradient_error_list = np.loadtxt(path+'no delta\\gradient_error_list.txt')
-    delta_intercept_error_list = np.loadtxt(path+'no delta\\intercept_error_list.txt')
+    delta_gradient_error_list = np.loadtxt(path+'no delta\\no240\\gradient_error_list.txt')
+    delta_intercept_error_list = np.loadtxt(path+'no delta\\no240\\intercept_error_list.txt')
 
     # stool data
     stool_data = np.loadtxt(path+'351 Calibration with errors.txt')
@@ -521,7 +521,7 @@ def analysis(block = False, filename = selected_csv):
     plt.legend()
     plt.grid()
     plt.tight_layout()
-    plt.savefig("final\\u-star plot", dpi=1200)
+    # plt.savefig("final\\u-star plot", dpi=1200)
     plt.show(block=block)
 
 
